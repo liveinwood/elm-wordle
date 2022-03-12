@@ -213,8 +213,8 @@ suite =
                     in
                     Expect.equal expect (getTable newWordle)
             ]
-        , describe "getCp"
-            [ test "test1" <|
+        , describe "getGreenChar"
+            [ test "getGreenChar test1" <|
                 \_ ->
                     let
                         answer =
@@ -223,147 +223,11 @@ suite =
                         guess =
                             [ 'A', 'B', 'C', 'D', 'E' ]
 
-                        expectation =
+                        expect =
                             Set.fromList [ 'A', 'B', 'C', 'D', 'E' ]
                     in
-                    Expect.equal (Cp expectation) (getCp answer guess)
-            , test "test2" <|
-                \_ ->
-                    let
-                        answer =
-                            [ 'A', 'B', 'C', 'D', 'E' ]
-
-                        guess =
-                            [ 'X', 'B', 'C', 'Y', 'Z' ]
-
-                        expectation =
-                            Set.fromList [ 'C', 'B' ]
-                    in
-                    Expect.equal (Cp expectation) (getCp answer guess)
-            , test "test3" <|
-                \_ ->
-                    let
-                        answer =
-                            [ 'A', 'B', 'C', 'D', 'E' ]
-
-                        guess =
-                            [ 'B', 'C', 'E', 'E', 'A' ]
-
-                        expectation =
-                            Set.empty
-                    in
-                    Expect.equal (Cp expectation) (getCp answer guess)
-            ]
-        , describe "getIw"
-            [ test "test1" <|
-                \_ ->
-                    let
-                        answer =
-                            [ 'A', 'B', 'C', 'D', 'E' ]
-
-                        guess =
-                            [ 'V', 'W', 'X', 'Y', 'Z' ]
-
-                        expectation =
-                            Set.empty
-                    in
-                    Expect.equal (Iw expectation) (getIw answer guess)
-            , test "test2" <|
-                \_ ->
-                    let
-                        answer =
-                            [ 'A', 'B', 'C', 'D', 'E' ]
-
-                        guess =
-                            [ 'V', 'A', 'X', 'E', 'Z' ]
-
-                        expectation =
-                            Set.fromList [ 'A', 'E' ]
-                    in
-                    Expect.equal (Iw expectation) (getIw answer guess)
-            , test "test3" <|
-                \_ ->
-                    let
-                        answer =
-                            [ 'A', 'B', 'C', 'D', 'E' ]
-
-                        guess =
-                            [ 'C', 'D', 'E', 'A', 'B' ]
-
-                        expectation =
-                            Set.fromList [ 'C', 'D', 'E', 'A', 'B' ]
-                    in
-                    Expect.equal (Iw expectation) (getIw answer guess)
-            ]
-        , describe "getNi"
-            [ test "test1" <|
-                \_ ->
-                    let
-                        answer =
-                            [ 'A', 'B', 'C', 'D', 'E' ]
-
-                        guess =
-                            [ 'V', 'W', 'X', 'Y', 'Z' ]
-
-                        expectation =
-                            Set.fromList [ 'V', 'W', 'X', 'Y', 'Z' ]
-                    in
-                    Expect.equal (Ni expectation) (getNi answer guess)
-            , test "test2" <|
-                \_ ->
-                    let
-                        answer =
-                            [ 'A', 'B', 'C', 'D', 'E' ]
-
-                        guess =
-                            [ 'A', 'B', 'C', 'D', 'E' ]
-
-                        expectation =
-                            Set.empty
-                    in
-                    Expect.equal (Ni expectation) (getNi answer guess)
-            , test "test3" <|
-                \_ ->
-                    let
-                        answer =
-                            [ 'A', 'B', 'C', 'D', 'E' ]
-
-                        guess =
-                            [ 'X', 'Y', 'Z', 'D', 'E' ]
-
-                        expectation =
-                            Set.fromList [ 'X', 'Y', 'Z' ]
-                    in
-                    Expect.equal (Ni expectation) (getNi answer guess)
-            ]
-        , describe "check"
-            [ test "test1" <|
-                \_ ->
-                    let
-                        answer =
-                            [ 'A', 'B', 'C', 'D', 'E' ]
-
-                        guess =
-                            [ 'A', 'B', 'C', 'D', 'E' ]
-
-                        expectation =
-                            Ok True
-                    in
-                    Expect.equal expectation (check answer guess)
-            , test "test2" <|
-                \_ ->
-                    let
-                        answer =
-                            [ 'A', 'B', 'C', 'D', 'E' ]
-
-                        guess =
-                            [ 'V', 'W', 'X', 'Y', 'Z' ]
-
-                        expectation =
-                            Err ( Cp Set.empty, Iw Set.empty, Ni (Set.fromList [ 'V', 'W', 'X', 'Y', 'Z' ]) )
-                    in
-                    Expect.equal expectation (check answer guess)
-            , test "test3" <|
+                    Expect.equal expect (getGreenChar answer guess)
+            , test "getGreenChar test2" <|
                 \_ ->
                     let
                         answer =
@@ -372,22 +236,104 @@ suite =
                         guess =
                             [ 'B', 'C', 'D', 'E', 'A' ]
 
-                        expectation =
-                            Err ( Cp Set.empty, Iw (Set.fromList [ 'B', 'C', 'D', 'E', 'A' ]), Ni Set.empty )
+                        expect =
+                            Set.empty
                     in
-                    Expect.equal expectation (check answer guess)
-            , test "test4" <|
+                    Expect.equal expect (getGreenChar answer guess)
+            , test "getGreenChar test3" <|
                 \_ ->
                     let
                         answer =
                             [ 'A', 'B', 'C', 'D', 'E' ]
 
                         guess =
-                            [ 'D', 'B', 'C', 'A', 'V' ]
+                            [ 'A', 'X', 'C', 'Y', 'E' ]
 
-                        expectation =
-                            Err ( Cp (Set.fromList [ 'B', 'C' ]), Iw (Set.fromList [ 'D', 'B', 'C', 'A' ]), Ni (Set.fromList [ 'V' ]) )
+                        expect =
+                            Set.fromList [ 'C', 'E', 'A' ]
                     in
-                    Expect.equal expectation (check answer guess)
+                    Expect.equal expect (getGreenChar answer guess)
+            ]
+        , describe "getYellowChar"
+            [ test "getYellowChar test1" <|
+                \_ ->
+                    let
+                        answer =
+                            [ 'A', 'B', 'C', 'D', 'E' ]
+
+                        guess =
+                            [ 'A', 'B', 'C', 'D', 'E' ]
+
+                        expect =
+                            Set.fromList [ 'A', 'B', 'C', 'D', 'E' ]
+                    in
+                    Expect.equal expect (getYellowChar answer guess)
+            , test "getYellowChar test2" <|
+                \_ ->
+                    let
+                        answer =
+                            [ 'A', 'B', 'C', 'D', 'E' ]
+
+                        guess =
+                            [ 'B', 'X', 'D', 'Y', 'A' ]
+
+                        expect =
+                            Set.fromList [ 'A', 'B', 'D' ]
+                    in
+                    Expect.equal expect (getYellowChar answer guess)
+            , test "getYellowChar test3" <|
+                \_ ->
+                    let
+                        answer =
+                            [ 'A', 'B', 'C', 'D', 'E' ]
+
+                        guess =
+                            [ 'V', 'W', 'X', 'Y', 'Z' ]
+
+                        expect =
+                            Set.empty
+                    in
+                    Expect.equal expect (getYellowChar answer guess)
+            ]
+        , describe "getGrayChar"
+            [ test "getGrayChar test1" <|
+                \_ ->
+                    let
+                        answer =
+                            [ 'A', 'B', 'C', 'D', 'E' ]
+
+                        guess =
+                            [ 'A', 'B', 'C', 'D', 'E' ]
+
+                        expect =
+                            Set.empty
+                    in
+                    Expect.equal expect (getGrayChar answer guess)
+            , test "getGrayChar test2" <|
+                \_ ->
+                    let
+                        answer =
+                            [ 'A', 'B', 'C', 'D', 'E' ]
+
+                        guess =
+                            [ 'B', 'X', 'D', 'Y', 'A' ]
+
+                        expect =
+                            Set.fromList [ 'X', 'Y' ]
+                    in
+                    Expect.equal expect (getGrayChar answer guess)
+            , test "getGrayChar test3" <|
+                \_ ->
+                    let
+                        answer =
+                            [ 'A', 'B', 'C', 'D', 'E' ]
+
+                        guess =
+                            [ 'V', 'W', 'X', 'Y', 'Z' ]
+
+                        expect =
+                            Set.fromList [ 'V', 'W', 'X', 'Y', 'Z' ]
+                    in
+                    Expect.equal expect (getGrayChar answer guess)
             ]
         ]

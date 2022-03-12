@@ -1,10 +1,15 @@
-module Wordle exposing (Cp(..), Iw(..), Ni(..), check, deleteChar, getAnswer, getCol, getCp, getIw, getNi, getRow, getTable, initializeWordle, pushChar)
+module Wordle exposing (deleteChar, getAnswer, getCol, getGrayChar, getGreenChar, getRow, getTable, getYellowChar, initializeWordle, pushChar)
 
-import Html.Attributes exposing (rows)
-import List.Extra exposing (getAt, setAt)
+import List.Extra exposing (getAt, setAt, zip)
 import Maybe exposing (withDefault)
 import Result exposing (andThen)
 import Set as S exposing (Set)
+
+
+type GameState
+    = Win
+    | Lose
+    | Continue
 
 
 type WordelError
@@ -42,6 +47,10 @@ type Wordle
         , answer : List Char
         , table : Table
         , dictionary : Dictionary
+        , gameState : GameState
+        , greenChars : Set Char
+        , yellowChars : Set Char
+        , grayChars : Set Char
         }
 
 
@@ -53,32 +62,11 @@ initializeWordle list answer =
         , answer = answer
         , table = initialTable
         , dictionary = S.fromList list
+        , gameState = Continue
+        , greenChars = S.empty
+        , yellowChars = S.empty
+        , grayChars = S.empty
         }
-
-
-getRow : Wordle -> Int
-getRow (Wordle w) =
-    w.row
-
-
-getCol : Wordle -> Int
-getCol (Wordle w) =
-    w.col
-
-
-getAnswer : Wordle -> List Char
-getAnswer (Wordle w) =
-    w.answer
-
-
-getTable : Wordle -> Table
-getTable (Wordle w) =
-    w.table
-
-
-getDictionary : Wordle -> Dictionary
-getDictionary (Wordle w) =
-    w.dictionary
 
 
 pushChar : Char -> Wordle -> Wordle
@@ -91,18 +79,13 @@ pushChar char (Wordle wordle) =
             row =
                 wordle.row
 
-            col =
-                wordle.col
-
             newCol =
-                col + 1
+                wordle.col + 1
         in
         Wordle
-            { row = row
-            , col = newCol
-            , answer = wordle.answer
-            , table = putCharAt row newCol char wordle.table
-            , dictionary = wordle.dictionary
+            { wordle
+                | col = newCol
+                , table = putCharAt row newCol char wordle.table
             }
 
 
@@ -135,80 +118,10 @@ deleteChar (Wordle wordle) =
                 wordle.col - 1
         in
         Wordle
-            { row = wordle.row
-            , col = newCol
-            , answer = wordle.answer
-            , table = putCharAt currentRow currentCol ' ' wordle.table
-            , dictionary = wordle.dictionary
+            { wordle
+                | col = newCol
+                , table = putCharAt currentRow currentCol ' ' wordle.table
             }
-
-
-
--- 正しい位置にある文字の集合
-
-
-type Cp
-    = Cp (Set Char)
-
-
-
--- 回答文字列に含まれている文字の集合
-
-
-type Iw
-    = Iw (Set Char)
-
-
-
--- 回答文字列に含まれない文字の集合
-
-
-type Ni
-    = Ni (Set Char)
-
-
-
--- 正解に含まれていない文字集合を返す
-
-
-getNi : List Char -> List Char -> Ni
-getNi answer guess =
-    Ni (S.diff (S.fromList guess) (S.fromList answer))
-
-
-
--- 正解に含まれている文字集合を返す
-
-
-getIw : List Char -> List Char -> Iw
-getIw answer guess =
-    Iw (S.intersect (S.fromList answer) (S.fromList guess))
-
-
-
--- 正解と同じ位置にある文字集合を返す
-
-
-getCp : List Char -> List Char -> Cp
-getCp answer guess =
-    Cp (S.fromList (getCpHelper answer guess))
-
-
-getCpHelper : List Char -> List Char -> List Char
-getCpHelper answer guess =
-    case ( answer, guess ) of
-        ( [], _ ) ->
-            []
-
-        ( _, [] ) ->
-            []
-
-        ( a :: aa, g :: gg ) ->
-            if a == g then
-                a :: getCpHelper aa gg
-
-            else
-                getCpHelper aa gg
 
 
 
@@ -216,12 +129,12 @@ getCpHelper answer guess =
 
 
 checkWordLength : Wordle -> Result WordelError Wordle
-checkWordLength wordle =
-    if getCol wordle < 4 then
+checkWordLength (Wordle wordle) =
+    if wordle.col < 4 then
         Err NotEnoughLetter
 
     else
-        Ok wordle
+        Ok (Wordle wordle)
 
 
 
@@ -247,15 +160,99 @@ checkWordExist (Wordle wordle) =
         Err NotInWordList
 
 
+
+-- 文字数が5文字で辞書にある単語であることをチェックする
+
+
 checkWord : Wordle -> Result WordelError Wordle
 checkWord wordle =
     checkWordLength wordle |> andThen checkWordExist
 
 
-check : List Char -> List Char -> Result ( Cp, Iw, Ni ) Bool
-check answer guess =
-    if answer == guess then
-        Ok True
+pushEnter : Wordle -> Wordle
+pushEnter (Wordle w) =
+    let
+        guess =
+            withDefault [] (getAt w.row w.table)
+
+        answer =
+            w.answer
+
+        newGreenChars =
+            S.union w.grayChars (getGreenChar answer guess)
+
+        newYellowChars =
+            S.union w.yellowChars (getYellowChar answer guess)
+
+        newGrayChars =
+            S.union w.grayChars (getGrayChar answer guess)
+    in
+    if guess == answer then
+        Wordle
+            { w
+                | gameState = Win
+                , greenChars = newGreenChars
+                , yellowChars = newYellowChars
+                , grayChars = newGrayChars
+            }
 
     else
-        Err ( getCp answer guess, getIw answer guess, getNi answer guess )
+        Wordle
+            { w
+                | row = w.row + 1
+                , col = -1
+                , gameState =
+                    if w.row + 1 == 4 then
+                        Lose
+
+                    else
+                        Continue
+                , greenChars = newGreenChars
+                , yellowChars = newYellowChars
+                , grayChars = newGrayChars
+            }
+
+
+getRow : Wordle -> Int
+getRow (Wordle w) =
+    w.row
+
+
+getCol : Wordle -> Int
+getCol (Wordle w) =
+    w.col
+
+
+getTable : Wordle -> Table
+getTable (Wordle w) =
+    w.table
+
+
+getAnswer : Wordle -> List Char
+getAnswer (Wordle w) =
+    w.answer
+
+
+getGreenChar : List Char -> List Char -> Set Char
+getGreenChar answer guess =
+    S.fromList
+        (List.filterMap
+            (\( a, g ) ->
+                if a == g then
+                    Just a
+
+                else
+                    Nothing
+            )
+            (zip answer guess)
+        )
+
+
+getYellowChar : List Char -> List Char -> Set Char
+getYellowChar answer guess =
+    S.intersect (S.fromList answer) (S.fromList guess)
+
+
+getGrayChar : List Char -> List Char -> Set Char
+getGrayChar answer guess =
+    S.diff (S.fromList guess) (S.fromList answer)
